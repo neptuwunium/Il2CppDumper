@@ -12,7 +12,6 @@ class Il2CppProcessTask(BackgroundTaskThread):
         self.bv = bv
         self.script_path = script_path
         self.header_path = header_path
-        self.has_types = False
     
     def process_header(self):
         self.progress = "Il2Cpp types (1/3)"
@@ -37,14 +36,11 @@ class Il2CppProcessTask(BackgroundTaskThread):
             addr = get_addr(self.bv, scriptMethod["Address"])
             name = scriptMethod["Name"]
             signature = scriptMethod["Signature"]
-            func = self.bv.get_function_at(addr)
-            if func != None:
-                if func.name == name:
-                    continue
-                if self.has_types:
-                    func.function_type = signature
-                else:
-                    func.name = scriptMethod["Name"]
+            func = self.bv.get_function_at(addr) or self.bv.create_user_function(addr)
+            if func == None:
+                continue
+            func.name = name.replace("$", "_").replace(".", "_")
+            func.add_tag('Il2CppSignature', signature, auto=True)
         
     def process_strings(self, data: dict):
         self.progress = "Il2Cpp strings (3/3)"
@@ -57,18 +53,17 @@ class Il2CppProcessTask(BackgroundTaskThread):
                 return
             addr = get_addr(self.bv, scriptString["Address"])
             value = scriptString["Value"]
-            var = self.bv.get_data_var_at(addr)
-            if var != None:
-                var.name = f"StringLiteral_{i}"
             self.bv.set_comment_at(addr, value)
-    
+            var = self.bv.get_data_var_at(addr) or self.bv.define_data_var(addr, "int64_t")
+            if var == None:
+                continue
+            var.name = f"StringLiteral_{i}"
+
     def run(self):
         if exists(self.header_path):
             self.process_header()
         else:
             log_warn("Header file not found")
-        if self.bv.get_type_by_name("Il2CppClass"):
-            self.has_types = True
         data = json.loads(open(self.script_path, 'rb').read().decode('utf-8'))
         if "ScriptMethod" in data:
             self.process_methods(data)
@@ -76,8 +71,11 @@ class Il2CppProcessTask(BackgroundTaskThread):
             self.process_strings(data)
 
 def process(bv: BinaryView):
+    if bv.get_tag_type('Il2CppSignature') == None:
+        bv.create_tag_type('Il2CppSignature', '📜')
+
     scriptDialog = OpenFileNameField("Select script.json", "script.json", "script.json")
-    headerDialog = OpenFileNameField("Select il2cpp_binja.h", "il2cpp_binja.h", "il2cpp_binja.h")
+    headerDialog = OpenFileNameField("Select il2cpp.h", "il2cpp.h", "il2cpp.h")
     if not get_form_input([scriptDialog, headerDialog], "script.json from Il2CppDumper"):
         return log_error("File not selected, try again!")
     if not exists(scriptDialog.result):
@@ -85,4 +83,15 @@ def process(bv: BinaryView):
     task = Il2CppProcessTask(bv, scriptDialog.result, headerDialog.result)
     task.start()
 
-PluginCommand.register("Il2CppDumper", "Process file", process)
+def process_func(bv: BinaryView, func):
+    tags = func.get_function_tags(auto=True, tag_type="Il2CppSignature")
+    if not tags:
+        return
+
+    func.type = tags[0].data
+
+def check_func(bv: BinaryView, func):
+    return len(func.get_function_tags(auto=True, tag_type="Il2CppSignature")) > 0
+
+PluginCommand.register("Il2Cpp", "Process file", process)
+PluginCommand.register_for_function("Annotate Il2Cpp Signature", "Annotate function call", process_func, is_valid=check_func)
