@@ -31,6 +31,14 @@ namespace Il2CppDumper
                 ShowHelp();
                 return;
             }
+            if (args.Length is 1 or 2 && args[0].EndsWith(".app", StringComparison.Ordinal))
+            {
+                args = [Path.Combine(args[0], "Frameworks/UnityFramework.framework/UnityFramework"), Path.Combine(args[0], "Data/Managed/Metadata/global-metadata.dat")];
+                if (args.Length == 2)
+                {
+                    args = [..args, args[1]];
+                }
+            }
             if (args.Length > 1)
             {
                 foreach (var arg in args)

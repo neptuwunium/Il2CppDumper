@@ -26,11 +26,22 @@ namespace Il2CppDumper
         private readonly StringBuilder arrayClassHeader = new();
         private readonly StringBuilder methodInfoHeader = new();
         private static readonly HashSet<ulong> methodInfoCache = new();
-        private static readonly HashSet<string> keyword = new(StringComparer.Ordinal)
-        { "klass", "monitor", "register", "_cs", "auto", "friend", "template", "flat", "default", "_ds", "interrupt",
-            "unsigned", "signed", "asm", "if", "case", "break", "continue", "do", "new", "_", "short", "union", "class", "namespace"};
-        private static readonly HashSet<string> specialKeywords = new(StringComparer.Ordinal)
-        { "inline", "near", "far" };
+        private static readonly HashSet<string> keyword = new(StringComparer.Ordinal) {
+            "_", "__has_cpp_attribute", "__has_embed", "__has_include", "_cs", "_ds", "alignas", "alignof", "and", "and_eq", "asm", 
+            "atomic_cancel", "atomic_commit", "atomic_noexcept", "auto", "bitand", "bitor", "bool", "break", "case", "catch", "char", 
+            "char16_t", "char32_t", "char8_t", "class", "co_await", "co_return", "co_yield", "compl", "concept", "const", "const_cast", 
+            "consteval", "constexpr", "constinit", "continue", "contract_assert", "decltype", "default", "define", "defined", "delete", 
+            "do", "double", "dynamic_cast", "elif", "elifdef", "elifndef", "else", "embed", "endif", "enum", "error", "explicit", "export", 
+            "extern", "false", "flat", "float", "for", "friend", "goto", "if", "ifdef", "ifndef", "import", "include", "inline", "int",
+            "interrupt", "klass", "line", "long", "module", "monitor", "mutable", "namespace", "new", "noexcept", "not", "not_eq", 
+            "nullptr", "operator", "or", "or_eq", "pragma", "private", "protected", "public", "reflexpr", "register", "reinterpret_cast",
+            "requires", "return", "short", "signed", "sizeof", "static", "static_assert", "static_cast", "struct", "switch", 
+            "synchronized", "template", "this", "thread_local", "throw", "true", "try", "typedef", "typeid", "typename", "undef", 
+            "union", "unsigned", "using", "virtual", "void", "volatile", "warning", "wchar_t", "while", "xor", "xor_eq",
+        };
+        private static readonly HashSet<string> specialKeywords = new(StringComparer.Ordinal) {
+            "inline", "near", "far"
+        };
 
         public StructGenerator(Il2CppExecutor il2CppExecutor)
         {

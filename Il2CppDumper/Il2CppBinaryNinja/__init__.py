@@ -17,17 +17,9 @@ class Il2CppProcessTask(BackgroundTaskThread):
     def process_header(self):
         self.progress = "Il2Cpp types (1/3)"
         with open(self.header_path) as f:
-            result = self.bv.parse_types_from_string(f.read())
-        length = len(result.types)
-        i = 0
-        for name in result.types:
-            i += 1
-            if i % 100 == 0:
-                percent = i / length * 100
-                self.progress = f"Il2Cpp types: {percent:.2f}%"
-            if self.bv.get_type_by_name(name):
-                continue
-            self.bv.define_user_type(name, result.types[name])
+            result = self.bv.parse_types_from_string(f.read(), ["--std=c++20"], ["/usr/include/c++/v1"])
+        type_list = [(Type.generate_auto_type_id("il2cppdumper", name), name, result.types[name]) for name in result.types]
+        self.bv.define_types(type_list, progress_func=None)
     
     def process_methods(self, data: dict):
         self.progress = f"Il2Cpp methods (2/3)"
@@ -43,7 +35,7 @@ class Il2CppProcessTask(BackgroundTaskThread):
                 percent = i / length * 100
                 self.progress = f"Il2Cpp methods: {percent:.2f}%"
             addr = get_addr(self.bv, scriptMethod["Address"])
-            name = scriptMethod["Name"].replace("$", "_").replace(".", "_")
+            name = scriptMethod["Name"]
             signature = scriptMethod["Signature"]
             func = self.bv.get_function_at(addr)
             if func != None:

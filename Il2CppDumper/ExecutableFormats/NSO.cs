@@ -279,7 +279,7 @@ namespace Il2CppDumper
                     var unCompressedData = new byte[header.TextSegment.DecompressedSize];
                     using (var decoder = new Lz4DecoderStream(new MemoryStream(textBytes)))
                     {
-                        decoder.Read(unCompressedData, 0, unCompressedData.Length);
+                        decoder.ReadExactly(unCompressedData, 0, unCompressedData.Length);
                     }
                     writer.Write(unCompressedData);
                 }
@@ -293,7 +293,7 @@ namespace Il2CppDumper
                     var unCompressedData = new byte[header.RoDataSegment.DecompressedSize];
                     using (var decoder = new Lz4DecoderStream(new MemoryStream(roDataBytes)))
                     {
-                        decoder.Read(unCompressedData, 0, unCompressedData.Length);
+                        decoder.ReadExactly(unCompressedData, 0, unCompressedData.Length);
                     }
                     writer.Write(unCompressedData);
                 }
@@ -307,7 +307,7 @@ namespace Il2CppDumper
                     var unCompressedData = new byte[header.DataSegment.DecompressedSize];
                     using (var decoder = new Lz4DecoderStream(new MemoryStream(dataBytes)))
                     {
-                        decoder.Read(unCompressedData, 0, unCompressedData.Length);
+                        decoder.ReadExactly(unCompressedData, 0, unCompressedData.Length);
                     }
                     writer.Write(unCompressedData);
                 }
