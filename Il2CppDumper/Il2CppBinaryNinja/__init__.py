@@ -47,10 +47,10 @@ class Il2CppProcessTask(BackgroundTaskThread):
             if func == None:
                 continue
 
-            func.add_tag('Il2CppSignature', signature, auto=True)
-
             if func.name != name:
                 func.name = name.replace("$", "_").replace(".", "_")
+
+            func.add_tag('Il2CppSignature', signature)
 
     def process_strings(self, data: dict):
         self.progress = "Il2Cpp strings (3/4): 0.00%"
@@ -127,9 +127,7 @@ class Il2CppProcessTask(BackgroundTaskThread):
         if try_types and "ScriptMetadata" in data: self.process_metadata(data)
 
 def process(bv: BinaryView):
-    if bv.get_tag_type('Il2CppSignature') == None:
-        bv.create_tag_type('Il2CppSignature', '📜')
-
+    bv.create_tag_type('Il2CppSignature', 'IL')
     scriptDialog = OpenFileNameField("Select script.json", "script.json", "script.json")
     headerDialog = OpenFileNameField("Select il2cpp.h", "il2cpp.h", "il2cpp.h")
     if not get_form_input([scriptDialog, headerDialog], "script.json from Il2CppDumper"):
@@ -140,14 +138,14 @@ def process(bv: BinaryView):
     task.start()
 
 def process_func(bv: BinaryView, func):
-    tags = func.get_function_tags(auto=True, tag_type="Il2CppSignature")
+    tags = func.get_function_tags(tag_type="Il2CppSignature")
     if not tags:
         return
 
     func.type = tags[0].data
 
 def check_func(bv: BinaryView, func):
-    return len(func.get_function_tags(auto=True, tag_type="Il2CppSignature")) > 0
+    return len(func.get_function_tags(tag_type="Il2CppSignature")) > 0
 
 PluginCommand.register("Il2Cpp", "Process file", process)
 PluginCommand.register_for_function("Annotate Il2Cpp Signature", "Annotate function call", process_func, is_valid=check_func)
